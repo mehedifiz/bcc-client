@@ -1,0 +1,31 @@
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  font-family: "Hind Siliguri", sans-serif;
+}
+
+/* media queries */
+
+@media screen and (max-width: 640px) {
+  html {
+    font-size: 3.5vw;
+  }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1464px) {
+  html {
+    font-size: 1.11vw;
+  }
+}
