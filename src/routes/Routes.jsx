@@ -1,8 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
+import Dashboard from "../layouts/Dashboard";
 import Root from "../layouts/Root";
+import Login from "../pages/Auth/Login";
+import Register from "../pages/Auth/Register";
+import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard/AdminDashboard";
+import UserDashboard from "../pages/Dashboard/User/UserDashboard/UserDashboard";
 import Home from "../pages/Home/Home";
-import Register from "../pages/login/Register";
-import Login from "../pages/login/Login";
 
 export const router = createBrowserRouter([
   {
@@ -23,18 +26,18 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // {
-  //   path: "/dashboard",
-  //   element: <Dashboard/>,
-  //   children: [
-  //     {
-  //       path: "admin",
-  //       element: <AdminDashboard />
-  //     },
-  //     {
-  //       path: "user",
-  //       element: <UserDashboard />
-  //     }
-  //   ],
-  // },
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
+    children: [
+      {
+        path: "admin",
+        element: <AdminDashboard />,
+      },
+      {
+        path: "user",
+        element: <UserDashboard />,
+      },
+    ],
+  },
 ]);
