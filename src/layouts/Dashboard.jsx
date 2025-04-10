@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import DashboardNav from "../components/shared/DashboardNav/DashboardNav";
 import DashboardSidebar from "../components/shared/DashboardSidebar/DashboardSidebar";
 import useAuth from "../hooks/useAuth";
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Handle screen resize and set mobile state
   useEffect(() => {
@@ -38,11 +39,27 @@ const Dashboard = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // Redirect based on user role
+  useEffect(() => {
+    if (user?.role) {
+      navigate(`/dashboard/${user.role}`);
+    }
+  }, [user?.role, navigate]);
+
+  // Close sidebar on route change for mobile
+  useEffect(() => {
+    if (isMobile && isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [isMobile, isSidebarOpen]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <DashboardNav toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      <div className="fixed top-0 left-0 right-0 z-30">
+        <DashboardNav toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      </div>
 
-      <div className="flex flex-1 relative overflow-hidden">
+      <div className="flex flex-1 relative overflow-hidden mt-16">
         {/* Overlay for mobile when sidebar is open */}
         <AnimatePresence>
           {isMobile && isSidebarOpen && (
@@ -79,7 +96,7 @@ const Dashboard = () => {
                 transition: { duration: 0.2 },
               }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className={`fixed md:relative z-20 h-[calc(100vh-64px)] shadow-lg md:shadow-none`}
+              className={`fixed z-20 h-[calc(100vh-64px)] shadow-lg md:shadow-none`}
             >
               <DashboardSidebar userRole={user?.role} closeSidebar={() => setIsSidebarOpen(false)} isMobile={isMobile} />
             </motion.div>
@@ -94,6 +111,8 @@ const Dashboard = () => {
           transition={{ delay: 0.2, duration: 0.5 }}
           style={{
             width: "100%",
+            marginLeft: isMobile ? 0 : isSidebarOpen ? 280 : 0,
+            transition: "margin-left 0.3s ease-in-out",
           }}
         >
           <div className="max-w-7xl mx-auto transition-all duration-300">
