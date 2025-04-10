@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { HiMenu, HiX } from "react-icons/hi";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { FaChevronDown, FaSignOutAlt, FaUserCircle, FaUserCog } from "react-icons/fa";
+import { HiMenu, HiX } from "react-icons/hi";
+import { Link } from "react-router-dom";
 import logo from "../../../assets/images/logo.png";
 import useAuth from "../../../hooks/useAuth";
 
@@ -84,10 +84,7 @@ const Nav = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Link 
-                    to={`/dashboard/${user?.role || 'user'}`} 
-                    className="text-teal-600 hover:text-teal-700 font-medium"
-                  >
+                  <Link to={`/dashboard/${user?.role || "user"}`} className="text-teal-600 hover:text-teal-700 font-medium">
                     ড্যাশবোর্ড
                   </Link>
                 </motion.div>
@@ -101,12 +98,16 @@ const Nav = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : <FaUserCircle />}
+                    <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white overflow-hidden">
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt={user.name || "User"} className="w-full h-full object-cover" />
+                      ) : user?.name ? (
+                        user.name.charAt(0).toUpperCase()
+                      ) : (
+                        <FaUserCircle />
+                      )}
                     </div>
-                    <span className="text-sm font-medium truncate max-w-[100px]">
-                      {user?.name || "ব্যবহারকারী"}
-                    </span>
+                    <span className="text-sm font-medium truncate max-w-[100px]">{user?.name || "ব্যবহারকারী"}</span>
                     <FaChevronDown className="text-gray-500 text-xs" />
                   </motion.div>
 
@@ -117,18 +118,15 @@ const Nav = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Link to="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <FaUserCircle className="mr-2" /> প্রোফাইল
                       </Link>
-                      <Link to={`/dashboard/${user?.role || 'user'}/settings`} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      <Link to={`/dashboard/${user?.role || "user"}/settings`} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <FaUserCog className="mr-2" /> সেটিংস
                       </Link>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left flex items-center px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
-                      >
+                      <button onClick={handleLogout} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-500 hover:bg-gray-100">
                         <FaSignOutAlt className="mr-2" /> লগআউট
                       </button>
                     </motion.div>
@@ -195,13 +193,15 @@ const Nav = () => {
                 {isLoggedIn ? (
                   <>
                     {/* User info on mobile */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="py-3 border-b border-gray-100 flex items-center"
-                    >
-                      <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white">
-                        {user?.name ? user.name.charAt(0).toUpperCase() : <FaUserCircle size={18} />}
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-3 border-b border-gray-100 flex items-center">
+                      <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white overflow-hidden">
+                        {user?.photoURL ? (
+                          <img src={user.photoURL} alt={user.name || "User"} className="w-full h-full object-cover" />
+                        ) : user?.name ? (
+                          user.name.charAt(0).toUpperCase()
+                        ) : (
+                          <FaUserCircle size={18} />
+                        )}
                       </div>
                       <div className="ml-3">
                         <p className="font-medium text-sm">{user?.name || "ব্যবহারকারী"}</p>
@@ -210,13 +210,9 @@ const Nav = () => {
                     </motion.div>
 
                     {/* Dashboard Link */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: 0.4 }}
-                    >
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.4 }}>
                       <Link
-                        to={`/dashboard/${user?.role || 'user'}`}
+                        to={`/dashboard/${user?.role || "user"}`}
                         className="py-2 border-b border-gray-100 block text-teal-600 hover:text-teal-700"
                         onClick={() => setIsMenuOpen(false)}
                       >
@@ -225,11 +221,7 @@ const Nav = () => {
                     </motion.div>
 
                     {/* Profile Link */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: 0.5 }}
-                    >
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, delay: 0.5 }}>
                       <Link
                         to="/profile"
                         className="py-2 border-b border-gray-100 block text-gray-700 hover:text-green-600"
@@ -262,11 +254,7 @@ const Nav = () => {
                       transition={{ duration: 0.3, delay: 0.5 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <Link
-                        to="/login"
-                        className="mt-2 text-gray-700 hover:text-teal-600 w-full text-center block py-2"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
+                      <Link to="/login" className="mt-2 text-gray-700 hover:text-teal-600 w-full text-center block py-2" onClick={() => setIsMenuOpen(false)}>
                         লগইন
                       </Link>
                     </motion.div>

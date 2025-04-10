@@ -16,10 +16,10 @@ const DashboardNav = ({ toggleSidebar, isSidebarOpen }) => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkIfMobile();
     window.addEventListener("resize", checkIfMobile);
-    
+
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
@@ -68,12 +68,7 @@ const DashboardNav = ({ toggleSidebar, isSidebarOpen }) => {
           </motion.button>
 
           <Link to="/" className="flex items-center">
-            <motion.img 
-              src={logo} 
-              alt="Bangladesh Anti-Corruption Commission" 
-              className="h-8 w-auto" 
-              whileHover={{ scale: 1.05 }} 
-            />
+            <motion.img src={logo} alt="Bangladesh Anti-Corruption Commission" className="h-8 w-auto" whileHover={{ scale: 1.05 }} />
           </Link>
         </div>
 
@@ -105,12 +100,16 @@ const DashboardNav = ({ toggleSidebar, isSidebarOpen }) => {
               onClick={handleUserClick}
               whileHover={{ backgroundColor: "#f3f4f6" }}
             >
-              <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white">
-                {user?.name ? user.name.charAt(0).toUpperCase() : <FaUser />}
+              <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white overflow-hidden">
+                {user?.photoURL ? (
+                  <img src={user.photoURL} alt={user.name || "User"} className="w-full h-full object-cover" />
+                ) : user?.name ? (
+                  user.name.charAt(0).toUpperCase()
+                ) : (
+                  <FaUser />
+                )}
               </div>
-              <span className="hidden md:block text-sm font-medium truncate max-w-[100px]">
-                {user?.name || "ব্যবহারকারী"}
-              </span>
+              <span className="hidden md:block text-sm font-medium truncate max-w-[100px]">{user?.name || "ব্যবহারকারী"}</span>
             </motion.div>
 
             {/* Dropdown menu */}
@@ -120,26 +119,15 @@ const DashboardNav = ({ toggleSidebar, isSidebarOpen }) => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
-                <Link 
-                  to="/profile" 
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setShowDropdown(false)}
-                >
+                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setShowDropdown(false)}>
                   প্রোফাইল
                 </Link>
-                <Link 
-                  to="/settings" 
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => setShowDropdown(false)}
-                >
+                <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setShowDropdown(false)}>
                   সেটিংস
                 </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 flex items-center"
-                >
+                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 flex items-center">
                   <FaSignOutAlt className="mr-2" /> লগআউট
                 </button>
               </motion.div>
