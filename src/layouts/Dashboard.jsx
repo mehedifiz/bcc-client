@@ -8,16 +8,19 @@ import useAuth from "../hooks/useAuth";
 const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { user } = useAuth();
 
   // Handle screen resize and set mobile state
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobileView = window.innerWidth < 768;
+      setIsMobile(mobileView);
 
-      // Auto-close sidebar on mobile when component mounts
-      if (window.innerWidth < 768) {
+      // Only auto-close sidebar on initial mount (not on every resize)
+      if (isInitialLoad && mobileView) {
         setIsSidebarOpen(false);
+        setIsInitialLoad(false);
       }
     };
 
@@ -29,7 +32,7 @@ const Dashboard = () => {
 
     // Cleanup
     return () => window.removeEventListener("resize", checkIfMobile);
-  }, []);
+  }, [isInitialLoad]); // Only depend on isInitialLoad, not isSidebarOpen
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -78,7 +81,7 @@ const Dashboard = () => {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className={`fixed md:relative z-20 h-[calc(100vh-64px)] shadow-lg md:shadow-none`}
             >
-              <DashboardSidebar userRole={user?.role} closeSidebar={() => setIsSidebarOpen(false)} />
+              <DashboardSidebar userRole={user?.role} closeSidebar={() => setIsSidebarOpen(false)} isMobile={isMobile} />
             </motion.div>
           )}
         </AnimatePresence>

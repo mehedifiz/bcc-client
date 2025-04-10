@@ -4,28 +4,17 @@ import { useEffect, useState } from "react";
 import { FaBell, FaChartBar, FaChevronRight, FaClipboardList, FaCog, FaFileAlt, FaHome, FaQuestionCircle, FaTimes, FaUserCog, FaUsers } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 
-const DashboardSidebar = ({ userRole, closeSidebar }) => {
+const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
 
-  // Detect mobile device
+  // Only close sidebar on actual route changes, not on initial render or other effects
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-
-    return () => window.removeEventListener("resize", checkIfMobile);
-  }, []);
-
-  // Close sidebar on route change on mobile
-  useEffect(() => {
-    if (isMobile) {
+    if (isMobile && prevPathname !== location.pathname) {
       closeSidebar();
+      setPrevPathname(location.pathname);
     }
-  }, [location.pathname, closeSidebar, isMobile]);
+  }, [location.pathname, closeSidebar, isMobile, prevPathname]);
 
   const adminMenuItems = [
     { title: "ড্যাশবোর্ড", icon: <FaHome />, path: "/dashboard/admin" },
@@ -88,7 +77,6 @@ const DashboardSidebar = ({ userRole, closeSidebar }) => {
                 flex items-center px-4 py-3 text-sm rounded-lg transition-colors
                 ${location.pathname === item.path ? "bg-teal-50 text-teal-600" : "text-gray-600 hover:bg-gray-100"}
               `}
-              onClick={isMobile ? closeSidebar : undefined}
             >
               <motion.span className="mr-3 text-lg" whileHover={{ rotate: 5 }}>
                 {item.icon}
@@ -117,6 +105,7 @@ const DashboardSidebar = ({ userRole, closeSidebar }) => {
 DashboardSidebar.propTypes = {
   userRole: PropTypes.string,
   closeSidebar: PropTypes.func.isRequired,
+  isMobile: PropTypes.bool,
 };
 
 export default DashboardSidebar;
