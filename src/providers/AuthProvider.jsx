@@ -18,6 +18,27 @@ const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(initialState);
   const [loading, setLoading] = useState(true);
 
+  // Add a function to refresh user data
+  const refreshUserData = async () => {
+    if (!auth.userId) return;
+
+    try {
+      const { data } = await axios.get(`/user/get-user/${auth.userId}`);
+      setAuth(prev => ({
+        ...prev,
+        user: data.data
+      }));
+      // Update localStorage with new user data
+      localStorage.setItem("auth", JSON.stringify({
+        ...auth,
+        user: data.data
+      }));
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
+
+  // Modified loginUser function
   const loginUser = async (formData) => {
     try {
       setLoading(true);
@@ -38,7 +59,6 @@ const AuthProvider = ({ children }) => {
         
         toast.success("লগইন সফল হয়েছে!");
 
-        // Redirect based on role
         if (data.data.role === 'admin') {
           window.location.href = '/dashboard/admin/';
         } else {
@@ -64,13 +84,21 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const authData = localStorage.getItem("auth");
     if (authData) {
-      setAuth(JSON.parse(authData));
+      const parsedData = JSON.parse(authData);
+      setAuth(parsedData);
+      
+      // Refresh user data on mount
       axios
-        .get(`/user/get-user/${JSON.parse(authData).userId}`)
+        .get(`/user/get-user/${parsedData.userId}`)
         .then((response) => {
           setAuth((prev) => ({
             ...prev,
             user: response.data.data,
+          }));
+          // Update localStorage
+          localStorage.setItem("auth", JSON.stringify({
+            ...parsedData,
+            user: response.data.data
           }));
         })
         .catch((error) => {
@@ -85,6 +113,7 @@ const AuthProvider = ({ children }) => {
     loginUser,
     logoutUser,
     loading,
+    refreshUserData, // Add the refresh function to context
   };
 
   return <AuthContext.Provider value={authInfo}>{children}</AuthContext.Provider>;

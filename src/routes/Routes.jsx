@@ -6,6 +6,7 @@ import Register from "../pages/Auth/Register";
 import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard/AdminDashboard";
 import UserDashboard from "../pages/Dashboard/User/UserDashboard/UserDashboard";
 import Home from "../pages/Home/Home";
+import Myprofile from "../pages/Dashboard/profile/myprofile";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,11 @@ export const router = createBrowserRouter([
         path: "login",
         element: <Login />,
       },
+      
+      {
+        path: "profile",
+        element: <Myprofile />,
+      },
     ],
   },
   {
@@ -38,6 +44,7 @@ export const router = createBrowserRouter([
         path: "user",
         element: <UserDashboard />,
       },
+    
     ],
   },
 ]);
