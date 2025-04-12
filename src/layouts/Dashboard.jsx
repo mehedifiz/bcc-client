@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import DashboardNav from "../components/shared/DashboardNav/DashboardNav";
 import DashboardSidebar from "../components/shared/DashboardSidebar/DashboardSidebar";
 import useAuth from "../hooks/useAuth";
@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   // Handle screen resize and set mobile state
   useEffect(() => {
@@ -41,8 +42,10 @@ const Dashboard = () => {
 
   // Redirect based on user role
   useEffect(() => {
-    if (user?.role) {
-      navigate(`/dashboard/${user.role}`);
+    if (pathname === "/dashboard") {
+      if (user?.role) {
+        navigate(`/dashboard/${user.role}`);
+      }
     }
   }, [user?.role, navigate]);
 
