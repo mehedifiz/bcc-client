@@ -7,6 +7,9 @@ import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard/AdminDashboa
 import UserDashboard from "../pages/Dashboard/User/UserDashboard/UserDashboard";
 import Home from "../pages/Home/Home";
 import Myprofile from "../pages/Dashboard/profile/myprofile";
+import NewIndividualComplaint from "../pages/Complaint/NewIndividualComplaint";
+import NewInstitutionalComplaint from "../pages/Complaint/NewInstitutionalComplaint";
+import MyComplaint from "../pages/Complaint/MyComplaint";
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +46,20 @@ export const router = createBrowserRouter([
       {
         path: "user",
         element: <UserDashboard />,
+      },
+       
+      {
+        path: "/dashboard/user/new-individual-complaint",
+        element: <NewIndividualComplaint />,
+      },
+       
+      {
+        path: "/dashboard/user/my-complaints",
+        element: <MyComplaint />,
+      },
+      {
+        path: "/dashboard/user/new-institutional-complaint",
+        element: <NewInstitutionalComplaint />,
       },
     
     ],

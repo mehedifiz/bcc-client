@@ -1,12 +1,28 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
-import { FaBell, FaChartBar, FaChevronRight, FaClipboardList, FaCog, FaFileAlt, FaHome, FaQuestionCircle, FaTimes, FaUserCog, FaUsers } from "react-icons/fa";
+import { 
+  FaBell, 
+  FaChartBar, 
+  FaChevronDown, 
+  FaChevronRight, 
+  FaClipboardList, 
+  FaCog, 
+  FaFileAlt, 
+  FaHome, 
+  FaQuestionCircle, 
+  FaTimes, 
+  FaUserCog, 
+  FaUsers,
+  FaBuilding,
+  FaUser
+} from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 
 const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
   const location = useLocation();
   const [prevPathname, setPrevPathname] = useState(location.pathname);
+  const [expandedMenus, setExpandedMenus] = useState({});
 
   // Only close sidebar on actual route changes, not on initial render or other effects
   useEffect(() => {
@@ -26,7 +42,22 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
 
   const userMenuItems = [
     { title: "ড্যাশবোর্ড", icon: <FaHome />, path: "/dashboard/user" },
-    { title: "নতুন অভিযোগ", icon: <FaFileAlt />, path: "/dashboard/user/new-complaint" },
+    {
+      title: "নতুন অভিযোগ",
+      icon: <FaFileAlt />,
+      children: [
+        {
+          title: "ব্যক্তিগত অভিযোগ",
+          icon: <FaUser />,
+          path: "/dashboard/user/new-individual-complaint"
+        },
+        {
+          title: "প্রাতিষ্ঠানিক অভিযোগ",
+          icon: <FaBuilding />,
+          path: "/dashboard/user/new-institutional-complaint"
+        }
+      ]
+    },
     { title: "আমার অভিযোগ", icon: <FaClipboardList />, path: "/dashboard/user/my-complaints" },
     { title: "বিজ্ঞপ্তি", icon: <FaBell />, path: "/dashboard/user/notifications" },
     { title: "সাহায্য", icon: <FaQuestionCircle />, path: "/dashboard/user/help" },
@@ -34,6 +65,13 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
   ];
 
   const menuItems = userRole === "admin" ? adminMenuItems : userMenuItems;
+
+  const toggleMenu = (index) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
 
   const sidebarVariants = {
     hidden: { opacity: 0, x: -20 },
@@ -52,8 +90,21 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
     visible: { opacity: 1, x: 0 },
   };
 
+  const childVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { 
+      opacity: 1, 
+      height: "auto",
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
-    <motion.div className="h-full bg-white overflow-y-auto p-4 relative w-[280px]" initial="hidden" animate="visible" variants={sidebarVariants}>
+    <motion.div className="h-full bg-white overflow-y-auto p-4 relative w-[280px]" 
+      initial="hidden" 
+      animate="visible" 
+      variants={sidebarVariants}
+    >
       {/* Close button - visible only on mobile */}
       <motion.button
         onClick={closeSidebar}
@@ -71,23 +122,72 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
       <div className="mt-6 space-y-1.5 mb-32">
         {menuItems.map((item, index) => (
           <motion.div key={index} variants={itemVariants}>
-            <Link
-              to={item.path}
-              className={`
-                flex items-center px-4 py-3 text-sm rounded-lg transition-colors
-                ${location.pathname === item.path ? "bg-teal-50 text-teal-600" : "text-gray-600 hover:bg-gray-100"}
-              `}
-            >
-              <motion.span className="mr-3 text-lg" whileHover={{ rotate: 5 }}>
-                {item.icon}
-              </motion.span>
-              <span>{item.title}</span>
-              {location.pathname === item.path && (
-                <motion.span className="ml-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                  <FaChevronRight />
-                </motion.span>
-              )}
-            </Link>
+            {item.children ? (
+              <div>
+                <button
+                  onClick={() => toggleMenu(index)}
+                  className={`
+                    w-full flex items-center px-4 py-3 text-sm rounded-lg transition-colors
+                    ${location.pathname.includes(item.path) ? "bg-teal-50 text-teal-600" : "text-gray-600 hover:bg-gray-100"}
+                  `}
+                >
+                  <span className="mr-3 text-lg">{item.icon}</span>
+                  <span>{item.title}</span>
+                  <motion.span 
+                    className="ml-auto"
+                    animate={{ rotate: expandedMenus[index] ? 180 : 0 }}
+                  >
+                    <FaChevronDown />
+                  </motion.span>
+                </button>
+                <AnimatePresence>
+                  {expandedMenus[index] && (
+                    <motion.div
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      variants={childVariants}
+                      className="pl-8"
+                    >
+                      {item.children.map((child, childIndex) => (
+                        <Link
+                          key={childIndex}
+                          to={child.path}
+                          className={`
+                            flex items-center px-4 py-2 text-sm rounded-lg transition-colors my-1
+                            ${location.pathname === child.path ? "bg-teal-50 text-teal-600" : "text-gray-600 hover:bg-gray-100"}
+                          `}
+                        >
+                          <span className="mr-3 text-lg">{child.icon}</span>
+                          <span>{child.title}</span>
+                        </Link>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link
+                to={item.path}
+                className={`
+                  flex items-center px-4 py-3 text-sm rounded-lg transition-colors
+                  ${location.pathname === item.path ? "bg-teal-50 text-teal-600" : "text-gray-600 hover:bg-gray-100"}
+                `}
+              >
+                <span className="mr-3 text-lg">{item.icon}</span>
+                <span>{item.title}</span>
+                {location.pathname === item.path && (
+                  <motion.span 
+                    className="ml-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <FaChevronRight />
+                  </motion.span>
+                )}
+              </Link>
+            )}
           </motion.div>
         ))}
       </div>
