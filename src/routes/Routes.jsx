@@ -12,11 +12,13 @@ import NewInstitutionalComplaint from "../pages/Complaint/NewInstitutionalCompla
 import MyComplaint from "../pages/Complaint/MyComplaint";
 import IndividualComplaintView from "../pages/Complaint/IndividualComplaintView";
 import PageNotFound from "../pages/PageNotFound/PageNotFound";
+import ErrorElement from "../pages/ErrorElement/ErrorElement";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
+    errorElement: <ErrorElement />,
     children: [
       {
         index: true,
@@ -40,6 +42,7 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <Dashboard />,
+    errorElement: <ErrorElement />,
     children: [
       {
         path: "admin",
