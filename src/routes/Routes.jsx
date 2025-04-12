@@ -11,6 +11,7 @@ import NewIndividualComplaint from "../pages/Complaint/NewIndividualComplaint";
 import NewInstitutionalComplaint from "../pages/Complaint/NewInstitutionalComplaint";
 import MyComplaint from "../pages/Complaint/MyComplaint";
 import IndividualComplaintView from "../pages/Complaint/IndividualComplaintView";
+import PageNotFound from "../pages/PageNotFound/PageNotFound";
 
 export const router = createBrowserRouter([
   {
@@ -73,4 +74,9 @@ export const router = createBrowserRouter([
     
     ],
   },
+    // Add PageNotFound for undefined routes
+    {
+      path: "*",
+      element: <PageNotFound />,
+    },
 ]);
