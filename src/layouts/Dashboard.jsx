@@ -42,19 +42,12 @@ const Dashboard = () => {
 
   // Redirect based on user role
   useEffect(() => {
-    if (pathname === "/dashboard") {
+    if (pathname === "/dashboard" || pathname === "/dashboard/") {
       if (user?.role) {
         navigate(`/dashboard/${user.role}`);
       }
     }
   }, [user?.role, navigate]);
-
-  // Close sidebar on route change for mobile
-  useEffect(() => {
-    if (isMobile && isSidebarOpen) {
-      setIsSidebarOpen(false);
-    }
-  }, [isMobile, isSidebarOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
