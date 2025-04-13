@@ -40,15 +40,11 @@ const EmptyState = ({ message }) => (
 
 const MyComplaint = () => {
   const navigate = useNavigate();
-  const axios = useAxios();
   const [filters, setFilters] = useState({
     type: "",
     search: "",
   });
-  const [actionLoading, setActionLoading] = useState({
-    payment: false,
-    download: false,
-  });
+  
 
   const { data: complaintsData, isLoading, isError } = useMyComplaints(filters);
 
