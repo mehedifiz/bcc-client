@@ -13,6 +13,7 @@ import MyComplaint from "../pages/Complaint/MyComplaint";
 import IndividualComplaintView from "../pages/Complaint/IndividualComplaintView";
 import PageNotFound from "../pages/PageNotFound/PageNotFound";
 import ErrorElement from "../pages/ErrorElement/ErrorElement";
+import InstitutionalComplaintView from "../pages/Complaint/InstitutionalComplaintView";
 
 export const router = createBrowserRouter([
   {
@@ -70,10 +71,10 @@ export const router = createBrowserRouter([
         path: "/dashboard/complaint/individual/:id",
         element: <IndividualComplaintView />
       },
-      // {
-      //   path: "/dashboard/complaint/institutional/:id",
-      //   element: <InstitutionalComplaintView />
-      // }
+      {
+        path: "/dashboard/complaint/institutional/:id",
+        element: <InstitutionalComplaintView />
+      }
     
     ],
   },
