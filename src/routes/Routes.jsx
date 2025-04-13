@@ -6,7 +6,7 @@ import Register from "../pages/Auth/Register";
 import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard/AdminDashboard";
 import UserDashboard from "../pages/Dashboard/User/UserDashboard/UserDashboard";
 import Home from "../pages/Home/Home";
-import Myprofile from "../pages/Dashboard/profile/myprofile";
+import Myprofile from "../pages/Dashboard/profile/Myprofile";
 import NewIndividualComplaint from "../pages/Complaint/NewIndividualComplaint";
 import NewInstitutionalComplaint from "../pages/Complaint/NewInstitutionalComplaint";
 import MyComplaint from "../pages/Complaint/MyComplaint";
