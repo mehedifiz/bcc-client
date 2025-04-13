@@ -14,6 +14,7 @@ import IndividualComplaintView from "../pages/Complaint/IndividualComplaintView"
 import PageNotFound from "../pages/PageNotFound/PageNotFound";
 import ErrorElement from "../pages/ErrorElement/ErrorElement";
 import InstitutionalComplaintView from "../pages/Complaint/InstitutionalComplaintView";
+import Allcomplaints from "../pages/Complaint/Admin/Allcomplaints";
 
 export const router = createBrowserRouter([
   {
@@ -74,7 +75,11 @@ export const router = createBrowserRouter([
       {
         path: "/dashboard/complaint/institutional/:id",
         element: <InstitutionalComplaintView />
-      }
+      },
+      {
+        path: "/dashboard/admin/complaints",
+        element: <Allcomplaints />
+      },
     
     ],
   },

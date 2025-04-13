@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   FaSpinner,
@@ -12,13 +12,33 @@ import {
   FaMapMarkerAlt,
   FaUserTie,
   FaBuilding,
+  FaReply,
+  FaEdit,
 } from "react-icons/fa";
 import useAxios from "../../hooks/useAxios";
 import toast from "react-hot-toast";
+import useAuth from "../../hooks/useAuth";
+import ResponseModal from "./components/ResponseModal";
 
 const IndividualComplaintView = () => {
   const { id } = useParams();
   const axios = useAxios();
+  const queryClient = useQueryClient();
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState(null);
+
+  const handleResponseClick = (response = null) => {
+    setSelectedResponse(response);
+    setIsResponseModalOpen(true);
+  };
+
+  const handleResponseSuccess = () => {
+    queryClient.invalidateQueries(["individual-complaint", id]);
+  };
 
   // Fetch complaint and responses together
   const { data, isLoading } = useQuery({
@@ -26,14 +46,14 @@ const IndividualComplaintView = () => {
     queryFn: async () => {
       const [complaintRes, responsesRes] = await Promise.all([
         axios.get(`/complaint/individual/${id}`),
-        axios.get(`/complaint/get-response/${id}?complaintType=IndividualComplaint`)
+        axios.get(`/complaint/get-response/${id}?complaintType=IndividualComplaint`),
       ]);
 
       return {
         complaint: complaintRes.data,
-        responses: responsesRes.data
+        responses: responsesRes.data,
       };
-    }
+    },
   });
 
   const handlePayment = () => {
@@ -68,14 +88,9 @@ const IndividualComplaintView = () => {
     }
 
     return data.responses.data.responses.map((response, index) => (
-      <div 
-        key={response._id} 
-        className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-200"
-      >
+      <div key={response._id} className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-blue-800">
-            প্রশাসনিক প্রতিক্রিয়া #{index + 1}
-          </h2>
+          <h2 className="text-lg font-semibold text-blue-800">প্রশাসনিক প্রতিক্রিয়া #{data.responses.data.totalResponses - index}</h2>
           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
             {response.responseType === "HEARING_NOTICE" ? "শুনানির নোটিশ" : response.responseType}
           </span>
@@ -85,18 +100,14 @@ const IndividualComplaintView = () => {
           {response.message && (
             <div>
               <label className="text-sm text-blue-600 block">বার্তা</label>
-              <p className="text-blue-800 bg-white bg-opacity-70 p-3 rounded">
-                {response.message}
-              </p>
+              <p className="text-blue-800 bg-white bg-opacity-70 p-3 rounded">{response.message}</p>
             </div>
           )}
 
           {response.actionTaken && (
             <div>
               <label className="text-sm text-blue-600 block">গৃহীত পদক্ষেপ</label>
-              <p className="text-blue-800 bg-white bg-opacity-70 p-3 rounded">
-                {response.actionTaken}
-              </p>
+              <p className="text-blue-800 bg-white bg-opacity-70 p-3 rounded">{response.actionTaken}</p>
             </div>
           )}
 
@@ -104,12 +115,8 @@ const IndividualComplaintView = () => {
             <div className="flex items-center bg-white bg-opacity-70 p-4 rounded">
               <FaCalendarAlt className="text-blue-600 text-xl mr-3" />
               <div>
-                <label className="text-sm text-blue-600 block">
-                  পরবর্তী শুনানির তারিখ
-                </label>
-                <p className="text-blue-800 font-semibold">
-                  {formatDate(response.nextHearingDate)}
-                </p>
+                <label className="text-sm text-blue-600 block">পরবর্তী শুনানির তারিখ</label>
+                <p className="text-blue-800 font-semibold">{formatDate(response.nextHearingDate)}</p>
               </div>
             </div>
           )}
@@ -128,8 +135,8 @@ const IndividualComplaintView = () => {
         <div className="mt-4 pt-4 border-t border-blue-200 text-sm text-blue-600">
           <div className="flex items-center">
             {response.respondedBy?.photoURL && (
-              <img 
-                src={response.respondedBy.photoURL} 
+              <img
+                src={response.respondedBy.photoURL}
                 alt={response.respondedBy.name}
                 className="w-8 h-8 rounded-full mr-2"
               />
@@ -139,6 +146,12 @@ const IndividualComplaintView = () => {
               <p>তারিখ: {formatDate(response.createdAt)}</p>
             </div>
           </div>
+          {user?.role === "admin" && (
+            <button onClick={() => handleResponseClick(response)} className="text-blue-600 hover:text-blue-800">
+              <FaEdit className="mr-1" />
+              সম্পাদনা
+            </button>
+          )}
         </div>
       </div>
     ));
@@ -148,37 +161,43 @@ const IndividualComplaintView = () => {
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       {/* Page Header with Navigation */}
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Link
-          to="/dashboard/user/my-complaints"
-          className="flex items-center text-gray-600 hover:text-purple-700 transition-colors"
-        >
+        <Link to="/dashboard/user/my-complaints" className="flex items-center text-gray-600 hover:text-purple-700 transition-colors">
           <FaArrowLeft className="mr-2" />
           <span className="font-medium">ফিরে যান</span>
         </Link>
 
         <div className="flex gap-3">
-          {data?.complaint?.data?.payment?.status !== "PAID" ? (
+          {user?.role === "admin" ? (
             <button
-              onClick={handlePayment}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md"
+              onClick={() => handleResponseClick()}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md"
             >
-              <FaMoneyBill className="mr-2" />
-              পেমেন্ট করুন
+              <FaReply className="mr-2" />
+              প্রতিক্রিয়া দিন
             </button>
           ) : (
-            <div className="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
-              
-              <button
-            onClick={handleDownloadPDF}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md"
-          >
-            <FaFileDownload className="mr-2" />
-            পিডিএফ ডাউনলোড
-          </button>
-            </div>
+            <>
+              {data?.complaint?.data?.payment?.status !== "PAID" ? (
+                <button
+                  onClick={handlePayment}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md"
+                >
+                  <FaMoneyBill className="mr-2" />
+                  পেমেন্ট করুন
+                </button>
+              ) : (
+                <div className="flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md"
+                  >
+                    <FaFileDownload className="mr-2" />
+                    পিডিএফ ডাউনলোড
+                  </button>
+                </div>
+              )}
+            </>
           )}
-
-         
         </div>
       </div>
 
@@ -187,22 +206,16 @@ const IndividualComplaintView = () => {
         <div className="bg-gradient-to-r from-teal-700 to-teal-900 text-white p-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                ব্যক্তিগত অভিযোগ
-              </h1>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">ব্যক্তিগত অভিযোগ</h1>
               <div className="text-sm opacity-90">
                 <span>ফাইল নং: {data?.complaint?.data?.fileNumber}</span>
                 <span className="mx-2">•</span>
-                <span>
-                  দাখিলের তারিখ: {formatDate(data?.complaint?.data?.createdAt)}
-                </span>
+                <span>দাখিলের তারিখ: {formatDate(data?.complaint?.data?.createdAt)}</span>
               </div>
             </div>
             <div className="mt-4 md:mt-0">
               <div className="inline-block px-3 py-1 rounded-full bg-white bg-opacity-20 text-gray-600 text-sm font-medium">
-                {data?.complaint?.data?.status === "PENDING"
-                  ? "অপেক্ষমান"
-                  : data?.complaint?.data?.status}
+                {data?.complaint?.data?.status === "PENDING" ? "অপেক্ষমান" : data?.complaint?.data?.status}
               </div>
             </div>
           </div>
@@ -211,16 +224,12 @@ const IndividualComplaintView = () => {
         {/* Status Timeline */}
         <div className="px-6 py-4 bg-gray-50 border-b">
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white">
-              1
-            </div>
+            <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white">1</div>
             <div className="h-1 flex-grow bg-gray-300 mx-2"></div>
-            
-                <div
+
+            <div
               className={`w-8 h-8 rounded-full ${
-                data?.complaint?.data?.payment?.status === "PAID"
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-300 text-gray-600"
+                data?.complaint?.data?.payment?.status === "PAID" ? "bg-green-500 text-white" : "bg-gray-300 text-gray-600"
               } flex items-center justify-center`}
             >
               2
@@ -228,9 +237,7 @@ const IndividualComplaintView = () => {
             <div className="h-1 flex-grow bg-gray-300 mx-2"></div>
             <div
               className={`w-8 h-8 rounded-full ${
-                data?.responses?.data?.responses?.length
-                  ? "bg-teal-700 text-white"
-                  : "bg-gray-300 text-gray-600"
+                data?.responses?.data?.responses?.length ? "bg-teal-700 text-white" : "bg-gray-300 text-gray-600"
               } flex items-center justify-center`}
             >
               3
@@ -250,87 +257,58 @@ const IndividualComplaintView = () => {
             <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
               <div className="flex items-center mb-4">
                 <FaUserTie className="text-blue-500 text-xl mr-3" />
-                <h2 className="text-lg font-semibold text-gray-800">
-                  অভিযোগকারীর তথ্য
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-800">অভিযোগকারীর তথ্য</h2>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-500 block">নাম</label>
+                  <p className="font-medium text-gray-800">{data?.complaint?.data?.complainant?.name || "অপ্রাপ্য"}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-500 block">পিতা/স্বামীর নাম</label>
                   <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.complainant?.name || "অপ্রাপ্য"}
+                    {data?.complaint?.data?.complainant?.fatherOrSpouseName || "অপ্রাপ্য"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    পিতা/স্বামীর নাম
-                  </label>
-                  <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.complainant?.fatherOrSpouseName ||
-                      "অপ্রাপ্য"}
-                  </p>
+                  <label className="text-sm text-gray-500 block">মাতার নাম</label>
+                  <p className="font-medium text-gray-800">{data?.complaint?.data?.complainant?.motherName || "অপ্রাপ্য"}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    মাতার নাম
-                  </label>
-                  <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.complainant?.motherName || "অপ্রাপ্য"}
-                  </p>
+                  <label className="text-sm text-gray-500 block">এনআইডি/পাসপোর্ট</label>
+                  <p className="font-medium text-gray-800">{data?.complaint?.data?.complainant?.nidOrPassport || "অপ্রাপ্য"}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    এনআইডি/পাসপোর্ট
-                  </label>
-                  <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.complainant?.nidOrPassport || "অপ্রাপ্য"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500 block">
-                    যোগাযোগের তথ্য
-                  </label>
+                  <label className="text-sm text-gray-500 block">যোগাযোগের তথ্য</label>
                   <div className="pl-3 border-l-2 border-gray-300">
                     <p className="text-gray-800 mb-1">
                       <strong>ঠিকানা:</strong>{" "}
-                      {data?.complaint?.data?.complainant?.contactInfo
-                        ?.permanentAddress || "অপ্রাপ্য"}
+                      {data?.complaint?.data?.complainant?.contactInfo?.permanentAddress || "অপ্রাপ্য"}
                     </p>
                     <p className="text-gray-800 mb-1">
                       <strong>পেশা:</strong>{" "}
-                      {data?.complaint?.data?.complainant?.contactInfo?.occupation ||
-                        "অপ্রাপ্য"}
+                      {data?.complaint?.data?.complainant?.contactInfo?.occupation || "অপ্রাপ্য"}
                     </p>
                     <p className="text-gray-800 mb-1">
                       <strong>মোবাইল:</strong>{" "}
-                      {data?.complaint?.data?.complainant?.contactInfo?.mobile ||
-                        "অপ্রাপ্য"}
+                      {data?.complaint?.data?.complainant?.contactInfo?.mobile || "অপ্রাপ্য"}
                     </p>
                     <p className="text-gray-800">
                       <strong>ইমেইল:</strong>{" "}
-                      {data?.complaint?.data?.complainant?.contactInfo?.email ||
-                        "অপ্রাপ্য"}
+                      {data?.complaint?.data?.complainant?.contactInfo?.email || "অপ্রাপ্য"}
                     </p>
                   </div>
                 </div>
                 {data?.complaint?.data?.complainant?.tradeLicenseNo && (
                   <div>
-                    <label className="text-sm text-gray-500 block">
-                      ট্রেড লাইসেন্স
-                    </label>
-                    <p className="font-medium text-gray-800">
-                      {data?.complaint?.data?.complainant?.tradeLicenseNo}
-                    </p>
+                    <label className="text-sm text-gray-500 block">ট্রেড লাইসেন্স</label>
+                    <p className="font-medium text-gray-800">{data?.complaint?.data?.complainant?.tradeLicenseNo}</p>
                   </div>
                 )}
                 {data?.complaint?.data?.complainant?.tinNumber && (
                   <div>
-                    <label className="text-sm text-gray-500 block">
-                      টিআইএন
-                    </label>
-                    <p className="font-medium text-gray-800">
-                      {data?.complaint?.data?.complainant?.tinNumber}
-                    </p>
+                    <label className="text-sm text-gray-500 block">টিআইএন</label>
+                    <p className="font-medium text-gray-800">{data?.complaint?.data?.complainant?.tinNumber}</p>
                   </div>
                 )}
               </div>
@@ -340,58 +318,41 @@ const IndividualComplaintView = () => {
             <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
               <div className="flex items-center mb-4">
                 <FaBuilding className="text-red-500 text-xl mr-3" />
-                <h2 className="text-lg font-semibold text-gray-800">
-                  প্রতিপক্ষের তথ্য
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-800">প্রতিপক্ষের তথ্য</h2>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    নাম/প্রতিষ্ঠান
-                  </label>
-                  <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.opponent?.nameOrInstitution || "অপ্রাপ্য"}
-                  </p>
+                  <label className="text-sm text-gray-500 block">নাম/প্রতিষ্ঠান</label>
+                  <p className="font-medium text-gray-800">{data?.complaint?.data?.opponent?.nameOrInstitution || "অপ্রাপ্য"}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500 block">ঠিকানা</label>
-                  <p className="font-medium text-gray-800">
-                    {data?.complaint?.data?.opponent?.contactAddress || "অপ্রাপ্য"}
-                  </p>
+                  <p className="font-medium text-gray-800">{data?.complaint?.data?.opponent?.contactAddress || "অপ্রাপ্য"}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    যোগাযোগের তথ্য
-                  </label>
+                  <label className="text-sm text-gray-500 block">যোগাযোগের তথ্য</label>
                   <div className="pl-3 border-l-2 border-gray-300">
                     {data?.complaint?.data?.opponent?.telephone && (
                       <p className="text-gray-800 mb-1">
-                        <strong>টেলিফোন:</strong>{" "}
-                        {data?.complaint?.data?.opponent?.telephone}
+                        <strong>টেলিফোন:</strong> {data?.complaint?.data?.opponent?.telephone}
                       </p>
                     )}
                     {data?.complaint?.data?.opponent?.mobile && (
                       <p className="text-gray-800 mb-1">
-                        <strong>মোবাইল:</strong>{" "}
-                        {data?.complaint?.data?.opponent?.mobile}
+                        <strong>মোবাইল:</strong> {data?.complaint?.data?.opponent?.mobile}
                       </p>
                     )}
                     {data?.complaint?.data?.opponent?.email && (
                       <p className="text-gray-800">
-                        <strong>ইমেইল:</strong>{" "}
-                        {data?.complaint?.data?.opponent?.email}
+                        <strong>ইমেইল:</strong> {data?.complaint?.data?.opponent?.email}
                       </p>
                     )}
                   </div>
                 </div>
                 {data?.complaint?.data?.opponent?.tradeLicenseNo && (
                   <div>
-                    <label className="text-sm text-gray-500 block">
-                      ট্রেড লাইসেন্স
-                    </label>
-                    <p className="font-medium text-gray-800">
-                      {data?.complaint?.data?.opponent?.tradeLicenseNo}
-                    </p>
+                    <label className="text-sm text-gray-500 block">ট্রেড লাইসেন্স</label>
+                    <p className="font-medium text-gray-800">{data?.complaint?.data?.opponent?.tradeLicenseNo}</p>
                   </div>
                 )}
               </div>
@@ -400,36 +361,24 @@ const IndividualComplaintView = () => {
 
           {/* Complaint Details */}
           <div className="mt-8 bg-white p-5 rounded-lg border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              অভিযোগের বিবরণ
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">অভিযোগের বিবরণ</h2>
             <div className="space-y-5">
               {data?.complaint?.data?.complaintDetails?.lawSection && (
                 <div>
-                  <label className="text-sm text-gray-500 block">
-                    আইনের ধারা
-                  </label>
-                  <p className="font-medium text-gray-800 bg-gray-50 p-3 rounded">
-                    {data?.complaint?.data?.complaintDetails?.lawSection}
-                  </p>
+                  <label className="text-sm text-gray-500 block">আইনের ধারা</label>
+                  <p className="font-medium text-gray-800 bg-gray-50 p-3 rounded">{data?.complaint?.data?.complaintDetails?.lawSection}</p>
                 </div>
               )}
               <div>
-                <label className="text-sm text-gray-500 block">
-                  বিস্তারিত বর্ণনা
-                </label>
+                <label className="text-sm text-gray-500 block">বিস্তারিত বর্ণনা</label>
                 <p className="font-medium text-gray-800 bg-gray-50 p-3 rounded whitespace-pre-wrap">
-                  {data?.complaint?.data?.complaintDetails?.description ||
-                    "বিস্তারিত বর্ণনা প্রদান করা হয়নি"}
+                  {data?.complaint?.data?.complaintDetails?.description || "বিস্তারিত বর্ণনা প্রদান করা হয়নি"}
                 </p>
               </div>
               <div>
-                <label className="text-sm text-gray-500 block">
-                  প্রত্যাশিত প্রতিকার
-                </label>
+                <label className="text-sm text-gray-500 block">প্রত্যাশিত প্রতিকার</label>
                 <p className="font-medium text-gray-800 bg-gray-50 p-3 rounded">
-                  {data?.complaint?.data?.complaintDetails?.expectedRemedy ||
-                    "প্রত্যাশিত প্রতিকার উল্লেখ করা হয়নি"}
+                  {data?.complaint?.data?.complaintDetails?.expectedRemedy || "প্রত্যাশিত প্রতিকার উল্লেখ করা হয়নি"}
                 </p>
               </div>
             </div>
@@ -444,12 +393,22 @@ const IndividualComplaintView = () => {
               {renderResponseTimeline()}
             </div>
           ) : (
-            <div className="mt-8 p-6 bg-gray-50 rounded-lg text-center text-gray-500">
-              কোন প্রশাসনিক প্রতিক্রিয়া পাওয়া যায়নি
-            </div>
+            <div className="mt-8 p-6 bg-gray-50 rounded-lg text-center text-gray-500">কোন প্রশাসনিক প্রতিক্রিয়া পাওয়া যায়নি</div>
           )}
         </div>
       </div>
+
+      <ResponseModal
+        isOpen={isResponseModalOpen}
+        onClose={() => {
+          setIsResponseModalOpen(false);
+          setSelectedResponse(null);
+        }}
+        complaintId={id}
+        complaintType="IndividualComplaint"
+        existingResponse={selectedResponse}
+        onSuccess={handleResponseSuccess}
+      />
     </div>
   );
 };
