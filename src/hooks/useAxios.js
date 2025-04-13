@@ -3,12 +3,12 @@ import axios from "axios";
 const token = JSON.parse(localStorage.getItem("auth"))
 
 const axiosPublic = axios.create({
-  // baseURL: "http://localhost:7000/api",
-  baseURL: "https://bcc-server.vercel.app/api",
+  baseURL: "http://localhost:7000/api",
+  // baseURL: "https://bcc-server.vercel.app/api",
   headers: {
     Authorization: `${token?.token}`
   }
-});
+}); 
 console.log(token?.token)
 const useAxios = () => {
   return axiosPublic;
