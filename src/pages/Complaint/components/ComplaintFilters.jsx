@@ -14,8 +14,8 @@ export const ComplaintFilters = ({ filters, onFilterChange }) => (
     </div>
     
     <select
-      value={filters.type}
-      onChange={(e) => onFilterChange('type', e.target.value)}
+      value={filters.complaintType}
+      onChange={(e) => onFilterChange('complaintType', e.target.value)}
       className="p-2 border rounded-lg focus:ring-2 focus:ring-primary"
     >
       <option value="">সকল অভিযোগ</option>

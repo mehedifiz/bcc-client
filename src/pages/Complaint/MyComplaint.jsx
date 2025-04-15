@@ -41,7 +41,7 @@ const EmptyState = ({ message }) => (
 const MyComplaint = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    type: "",
+    complaintType: "",
     search: "",
   });
   
