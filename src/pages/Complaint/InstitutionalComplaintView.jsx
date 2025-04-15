@@ -1,5 +1,6 @@
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   FaSpinner,
@@ -10,34 +11,69 @@ import {
   FaMapMarkerAlt,
   FaBuilding,
   FaUserTie,
+  FaReply,
+  FaEdit,
 } from "react-icons/fa";
 import useAxios from "../../hooks/useAxios";
 import toast from "react-hot-toast";
+import useAuth from "../../hooks/useAuth";
+import ResponseModal from "./components/ResponseModal";
 
 const InstitutionalComplaintView = () => {
   const { id } = useParams();
   const axios = useAxios();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
+  // Add state for response modal
+  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState(null);
+
+  const handleResponseClick = (response = null) => {
+    setSelectedResponse(response);
+    setIsResponseModalOpen(true);
+  };
+
+  const handleResponseSuccess = () => {
+    queryClient.invalidateQueries(["Institutional-complaint", id]);
+  };
+
+  // Fetch complaint and responses together
+  const { data, isLoading } = useQuery({
+    queryKey: ["Institutional-complaint", id],
+    queryFn: async () => {
+      const [complaintRes, responsesRes] = await Promise.all([
+        axios.get(`/complaint/institutional/${id}`),
+        axios.get(
+          `/complaint/get-response/${id}?complaintType=InstitutionalComplaint`
+        ),
+      ]);
+
+      return {
+        complaint: complaintRes.data,
+        responses: responsesRes.data,
+      };
+    },
+  });
   
-    // Fetch complaint and responses together
-    const { data, isLoading } = useQuery({
-        queryKey: ["Institutional-complaint", id],
-        queryFn: async () => {
-          const [complaintRes, responsesRes] = await Promise.all([
-            axios.get(`/complaint/institutional/${id}`),
-            axios.get(`/complaint/get-response/${id}?complaintType=InstitutionalComplaint`)
-          ]);
-    
-          return {
-            complaint: complaintRes.data,
-            responses: responsesRes.data
-          };
-        }
-      });
-  console.log(data);
+  const handlePayment = async (complaintId, complaintType) => {
+    try {
+      console.log({ complaintId, complaintType });
+      toast.success("পেমেন্ট প্রক্রিয়া শুরু হচ্ছে...");
 
-  const handlePayment = () => {
-    navigate(`/dashboard/user/payment/${id}`);
+      const { data } = await axios.post("/payment/create-ssl-payment", {
+        complaintId,
+        complaintType,
+      });
+      console.log(data.data.paymentUrl);
+      if (data.data.paymentUrl) {
+        window.location.href = data.data.paymentUrl;
+      }
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -67,16 +103,18 @@ const InstitutionalComplaintView = () => {
     }
 
     return data.responses.data.responses.map((response, index) => (
-        <div 
-        key={response._id} 
+      <div
+        key={response._id}
         className="mt-8 bg-blue-50 p-6 rounded-lg border border-blue-200"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-blue-800">
-            প্রশাসনিক প্রতিক্রিয়া #{index + 1}
+            প্রশাসনিক প্রতিক্রিয়া #{data.responses.data.totalResponses - index}
           </h2>
           <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-            {response.responseType === "HEARING_NOTICE" ? "শুনানির নোটিশ" : response.responseType}
+            {response.responseType === "HEARING_NOTICE"
+              ? "শুনানির নোটিশ"
+              : response.responseType}
           </span>
         </div>
 
@@ -127,8 +165,8 @@ const InstitutionalComplaintView = () => {
         <div className="mt-4 pt-4 border-t border-blue-200 text-sm text-blue-600">
           <div className="flex items-center">
             {response.respondedBy?.photoURL && (
-              <img 
-                src={response.respondedBy.photoURL} 
+              <img
+                src={response.respondedBy.photoURL}
                 alt={response.respondedBy.name}
                 className="w-8 h-8 rounded-full mr-2"
               />
@@ -138,6 +176,15 @@ const InstitutionalComplaintView = () => {
               <p>তারিখ: {formatDate(response.createdAt)}</p>
             </div>
           </div>
+          {user?.role === "admin" && (
+            <button
+              onClick={() => handleResponseClick(response)}
+              className="text-blue-600 hover:text-blue-800 mt-2 flex items-center"
+            >
+              <FaEdit className="mr-1" />
+              সম্পাদনা
+            </button>
+          )}
         </div>
       </div>
     ));
@@ -156,22 +203,39 @@ const InstitutionalComplaintView = () => {
         </Link>
 
         <div className="flex gap-3">
-          {data?.complaint?.data?.payment?.status !== "PAID" ? (
+          {user?.role === "admin" ? (
             <button
-              onClick={handlePayment}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md"
+              onClick={() => handleResponseClick()}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md"
             >
-              <FaMoneyBill className="mr-2" />
-              পেমেন্ট করুন
+              <FaReply className="mr-2" />
+              প্রতিক্রিয়া দিন
             </button>
           ) : (
-            <button
-              onClick={handleDownloadPDF}
-              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md"
-            >
-              <FaFileDownload className="mr-2" />
-              পিডিএফ ডাউনলোড
-            </button>
+            <>
+              {data?.complaint?.data?.payment?.status !== "PAID" ? (
+                <button
+                  onClick={() =>
+                    handlePayment(
+                      data?.complaint?.data?._id,
+                      data?.complaint?.data?.complainantType
+                    )
+                  }
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md"
+                >
+                  <FaMoneyBill className="mr-2" />
+                  পেমেন্ট করুন
+                </button>
+              ) : (
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md"
+                >
+                  <FaFileDownload className="mr-2" />
+                  পিডিএফ ডাউনলোড
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -210,7 +274,7 @@ const InstitutionalComplaintView = () => {
             </div>
             <div className="h-1 flex-grow bg-gray-300 mx-2"></div>
             
-                <div
+            <div
               className={`w-8 h-8 rounded-full ${
                 data?.complaint?.data?.payment?.status === "PAID"
                   ? "bg-green-500 text-white"
@@ -435,6 +499,19 @@ const InstitutionalComplaintView = () => {
           )}
         </div>
       </div>
+
+      {/* Add Response Modal */}
+      <ResponseModal
+        isOpen={isResponseModalOpen}
+        onClose={() => {
+          setIsResponseModalOpen(false);
+          setSelectedResponse(null);
+        }}
+        complaintId={id}
+        complaintType="InstitutionalComplaint"
+        existingResponse={selectedResponse}
+        onSuccess={handleResponseSuccess}
+      />
     </div>
   );
 };

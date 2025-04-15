@@ -15,6 +15,7 @@ import PageNotFound from "../pages/PageNotFound/PageNotFound";
 import ErrorElement from "../pages/ErrorElement/ErrorElement";
 import InstitutionalComplaintView from "../pages/Complaint/InstitutionalComplaintView";
 import Allcomplaints from "../pages/Complaint/Admin/Allcomplaints";
+import PaymentFailed from "../pages/ErrorElement/PaymentFailed";
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <Myprofile />,
+      },
+      {
+        path: "payment/failed",
+        element: <PaymentFailed />
       },
     ],
   },
@@ -76,6 +81,8 @@ export const router = createBrowserRouter([
         path: "/dashboard/complaint/institutional/:id",
         element: <InstitutionalComplaintView />
       },
+     
+       
       {
         path: "/dashboard/admin/complaints",
         element: <Allcomplaints />
