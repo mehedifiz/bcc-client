@@ -103,7 +103,7 @@ const UserDashboard = () => {
           </div>
         </div>
         <Link 
-          to={`/dashboard/user/complaint/${complaint.complainantType === "IndividualComplaint" ? "individual" : "institutional"}/${complaint._id}`}
+          to={`/dashboard/complaint/${complaint.complainantType === "IndividualComplaint" ? "individual" : "institutional"}/${complaint._id}`}
           className="block"
         >
           <p className="text-sm text-gray-600 mb-2 line-clamp-2">
