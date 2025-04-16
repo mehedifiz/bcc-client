@@ -1,47 +1,91 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { FaChartLine, FaCheckCircle, FaClipboardList, FaExclamationCircle, FaEye, FaUsers } from "react-icons/fa";
-import { cardAnimation, popIn, slideRight, staggerContainer } from "../../../../utils/animations";
+import {
+  FaChartLine,
+  FaCheckCircle,
+  FaClipboardList,
+  FaExclamationCircle,
+  FaEye,
+  FaUsers,
+} from "react-icons/fa";
+import {
+  cardAnimation,
+  popIn,
+  slideRight,
+  staggerContainer,
+} from "../../../../utils/animations";
+import useAxios from "../../../../hooks/useAxios";
+import useMyComplaints from "../../../../hooks/useMyComplaints";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
+  const [recentComplaints, setRecentComplaints] = useState([]);
+  const { data: complaintData, isLoading: complaintsLoading } = useMyComplaints({ limit: 4 });
+  
   const [stats, setStats] = useState({
     totalComplaints: 0,
     resolvedComplaints: 0,
     pendingComplaints: 0,
     totalUsers: 0,
+    resolvedPercentage: 0,
   });
-
+  
+  const axios = useAxios();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate data fetching
-    setTimeout(() => {
-      setStats({
-        totalComplaints: 125,
-        resolvedComplaints: 87,
-        pendingComplaints: 38,
-        totalUsers: 230,
-      });
-      setIsLoading(false);
-    }, 800);
-  }, []);
+    // Fetch stats data
+    const fetchStats = async () => {
+      try {
+        const { data } = await axios.get("/stats/adminStats");
+        console.log("Stats data:", data?.data);
+        setStats({
+          totalComplaints: data?.data.totalComplaints || 0,
+          resolvedComplaints: data?.data.resolvedCount || 0,
+          pendingComplaints: data?.data.processingCount || 0,
+          totalUsers: data?.data.userCount || 0,
+          resolvedPercentage: data?.data.resolvedPercentage || 0,
+        });
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStats();
+  }, [axios]);
 
-  // Mock data for recent complaints
-  const recentComplaints = [
-    { id: "COM-2023-456", user: "রহিম আহমেদ", type: "দুর্নীতি", date: "১৮ জুন, ২০২৩", status: "পর্যালোচনাধীন" },
-    { id: "COM-2023-455", user: "ফাতেমা খাতুন", type: "হয়রানি", date: "১৭ জুন, ২০২৩", status: "নতুন" },
-    { id: "COM-2023-454", user: "করিম মিয়া", type: "আর্থিক অনিয়ম", date: "১৬ জুন, ২০২৩", status: "সম্পন্ন" },
-    { id: "COM-2023-453", user: "নূর জাহান", type: "আর্থিক অনিয়ম", date: "১৫ জুন, ২০২৩", status: "সম্পন্ন" },
-  ];
+  useEffect(() => {
+    // Process complaint data when it's loaded
+    if (complaintData && complaintData.data) {
+      // Transform the API data to match our expected format for display
+      const formattedComplaints = complaintData.data.map(complaint => ({
+        id: complaint.fileNumber,
+        user: complaint.complainant.name || complaint.userId.name,
+        type: complaint.complaintType === "INDIVIDUAL" ? "ব্যক্তিগত অভিযোগ" : "প্রাতিষ্ঠানিক অভিযোগ",
+        date: new Date(complaint.createdAt).toLocaleDateString('bn-BD', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }),
+        status: complaint.status === "PENDING" ? "বিচারাধীন" : 
+                complaint.status === "RESOLVED" ? "নিষ্পত্তি হয়েছে" : "প্রক্রিয়াধীন",
+        originalStatus: complaint.status
+      }));
+      
+      setRecentComplaints(formattedComplaints);
+    }
+  }, [complaintData]);
 
   // Get status color
   const getStatusColor = (status) => {
     switch (status) {
-      case "নতুন":
+      case "প্রক্রিয়াধীন":
         return "bg-blue-100 text-blue-700";
-      case "পর্যালোচনাধীন":
+      case "বিচারাধীন":
         return "bg-yellow-100 text-yellow-700";
-      case "সম্পন্ন":
+      case "নিষ্পত্তি হয়েছে":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
@@ -51,15 +95,30 @@ const AdminDashboard = () => {
   return (
     <div className="py-2">
       {/* Welcome section */}
-      <motion.div className="mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">ড্যাশবোর্ডে স্বাগতম</h1>
+      <motion.div
+        className="mb-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          ড্যাশবোর্ডে স্বাগতম
+        </h1>
         <p className="text-gray-600 mt-1">এটি একটি সংক্ষিপ্ত বিবরণ দেখাচ্ছে।</p>
       </motion.div>
 
       {/* Stats cards */}
-      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" variants={staggerContainer} initial="initial" animate="animate">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
         {/* Total Complaints */}
-        <motion.div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500" variants={cardAnimation}>
+        <motion.div
+          className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500"
+          variants={cardAnimation}
+        >
           {isLoading ? (
             <div className="animate-pulse h-20 bg-gray-200 rounded"></div>
           ) : (
@@ -88,7 +147,10 @@ const AdminDashboard = () => {
         </motion.div>
 
         {/* Resolved Complaints */}
-        <motion.div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500" variants={cardAnimation}>
+        <motion.div
+          className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500"
+          variants={cardAnimation}
+        >
           {isLoading ? (
             <div className="animate-pulse h-20 bg-gray-200 rounded"></div>
           ) : (
@@ -112,13 +174,20 @@ const AdminDashboard = () => {
                 </motion.span>
               </div>
               <p className="mt-2 text-gray-600">নিষ্পত্তি হয়েছে</p>
-              <p className="text-xs text-green-600 mt-1">{Math.round((stats.resolvedComplaints / stats.totalComplaints) * 100)}% সম্পূর্ণ</p>
+              <p className="text-xs text-green-600 mt-1">
+                {stats.totalComplaints > 0 
+                  ? Math.round((stats.resolvedComplaints / stats.totalComplaints) * 100)
+                  : 0}% সম্পূর্ণ
+              </p>
             </>
           )}
         </motion.div>
 
         {/* Pending Complaints */}
-        <motion.div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-yellow-500" variants={cardAnimation}>
+        <motion.div
+          className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-yellow-500"
+          variants={cardAnimation}
+        >
           {isLoading ? (
             <div className="animate-pulse h-20 bg-gray-200 rounded"></div>
           ) : (
@@ -147,7 +216,10 @@ const AdminDashboard = () => {
         </motion.div>
 
         {/* Total Users */}
-        <motion.div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-purple-500" variants={cardAnimation}>
+        <motion.div
+          className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-purple-500"
+          variants={cardAnimation}
+        >
           {isLoading ? (
             <div className="animate-pulse h-20 bg-gray-200 rounded"></div>
           ) : (
@@ -187,7 +259,9 @@ const AdminDashboard = () => {
           transition={{ delay: 0.2 }}
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-800">মাসিক পরিসংখ্যান</h2>
+            <h2 className="text-lg font-semibold text-gray-800">
+              মাসিক পরিসংখ্যান
+            </h2>
             <div className="flex items-center text-sm text-teal-600">
               <FaChartLine className="mr-1" /> বিস্তারিত দেখুন
             </div>
@@ -199,7 +273,9 @@ const AdminDashboard = () => {
             <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
               <div className="text-center text-gray-500">
                 <p>চার্ট ভিজুয়ালাইজেশন এখানে প্রদর্শিত হবে</p>
-                <p className="text-sm">(চার্ট লাইব্রেরি অন্তর্ভুক্ত করা প্রয়োজন)</p>
+                <p className="text-sm">
+                  (চার্ট লাইব্রেরি অন্তর্ভুক্ত করা প্রয়োজন)
+                </p>
               </div>
             </div>
           )}
@@ -215,46 +291,67 @@ const AdminDashboard = () => {
         >
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">সাম্প্রতিক অভিযোগ</h2>
-              <span className="text-xs bg-blue-100 text-blue-600 py-1 px-2 rounded-full">{recentComplaints.length}</span>
+              <h2 className="text-lg font-semibold text-gray-800">
+                সাম্প্রতিক অভিযোগ
+              </h2>
+              <span className="text-xs bg-blue-100 text-blue-600 py-1 px-2 rounded-full">
+                {recentComplaints.length}
+              </span>
             </div>
           </div>
 
-          {isLoading ? (
+          {complaintsLoading ? (
             <div className="px-6 pb-4 space-y-3">
               {[1, 2, 3].map((item) => (
-                <div key={item} className="animate-pulse h-16 bg-gray-200 rounded"></div>
+                <div
+                  key={item}
+                  className="animate-pulse h-16 bg-gray-200 rounded"
+                ></div>
               ))}
             </div>
           ) : (
             <div className="overflow-y-auto max-h-[320px]">
-              {recentComplaints.map((complaint, index) => (
-                <motion.div
-                  key={complaint.id}
-                  className="px-6 py-3 border-t border-gray-100 hover:bg-gray-50 transition-colors"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-sm">{complaint.user}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {complaint.type} • {complaint.date}
-                      </p>
+              {recentComplaints.length > 0 ? (
+                recentComplaints.map((complaint, index) => (
+                  <motion.div
+                    key={complaint.id || index}
+                    className="px-6 py-3 border-t border-gray-100 hover:bg-gray-50 transition-colors"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-sm">{complaint.user}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {complaint.type} • {complaint.date}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                          complaint.status
+                        )}`}
+                      >
+                        {complaint.status}
+                      </span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(complaint.status)}`}>{complaint.status}</span>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              ) : (
+                <div className="px-6 py-4 text-center text-gray-500">
+                  কোন অভিযোগ পাওয়া যায়নি
+                </div>
+              )}
               <div className="px-6 py-3 border-t border-gray-100">
-                <motion.button
-                  className="w-full py-2 text-center text-sm text-teal-600 hover:text-teal-700 flex items-center justify-center"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FaEye className="mr-2" /> সব দেখুন
-                </motion.button>
+                <Link to="/dashboard/admin/complaints">
+                  <motion.button
+                    className="w-full py-2 text-center text-sm text-teal-600 hover:text-teal-700 flex items-center justify-center"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FaEye className="mr-2" /> সব দেখুন
+                  </motion.button>
+                </Link>
               </div>
             </div>
           )}
