@@ -9,6 +9,16 @@ import {
   FaUsers,
 } from "react-icons/fa";
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
   cardAnimation,
   popIn,
   slideRight,
@@ -20,8 +30,10 @@ import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [recentComplaints, setRecentComplaints] = useState([]);
-  const { data: complaintData, isLoading: complaintsLoading } = useMyComplaints({ limit: 4 });
-  
+  const { data: complaintData, isLoading: complaintsLoading } = useMyComplaints({
+    limit: 4,
+  });
+
   const [stats, setStats] = useState({
     totalComplaints: 0,
     resolvedComplaints: 0,
@@ -29,56 +41,65 @@ const AdminDashboard = () => {
     totalUsers: 0,
     resolvedPercentage: 0,
   });
-  
+
+  const [monthlyStats, setMonthlyStats] = useState([]);
   const axios = useAxios();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch stats data
     const fetchStats = async () => {
       try {
         const { data } = await axios.get("/stats/adminStats");
-        console.log("Stats data:", data?.data);
+        const overview = data?.data?.overview || {};
+        const statusDist = data?.data?.statusDistribution || {};
+
         setStats({
-          totalComplaints: data?.data.totalComplaints || 0,
-          resolvedComplaints: data?.data.resolvedCount || 0,
-          pendingComplaints: data?.data.processingCount || 0,
-          totalUsers: data?.data.userCount || 0,
-          resolvedPercentage: data?.data.resolvedPercentage || 0,
+          totalComplaints: overview.totalComplaints || 0,
+          resolvedComplaints: overview.resolvedComplaints || 0,
+          pendingComplaints: statusDist.PENDING || 0,
+          totalUsers: overview.totalComplaints || 0,
+          resolvedPercentage:
+            (overview.resolvedComplaints / overview.totalComplaints) * 100 || 0,
         });
+
+        setMonthlyStats(data?.data?.monthlyStats || []);
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching stats:", error);
         setIsLoading(false);
       }
     };
-    
+
     fetchStats();
   }, [axios]);
 
   useEffect(() => {
-    // Process complaint data when it's loaded
     if (complaintData && complaintData.data) {
-      // Transform the API data to match our expected format for display
-      const formattedComplaints = complaintData.data.map(complaint => ({
+      const formattedComplaints = complaintData.data.map((complaint) => ({
         id: complaint.fileNumber,
         user: complaint.complainant.name || complaint.userId.name,
-        type: complaint.complaintType === "INDIVIDUAL" ? "ব্যক্তিগত অভিযোগ" : "প্রাতিষ্ঠানিক অভিযোগ",
-        date: new Date(complaint.createdAt).toLocaleDateString('bn-BD', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
+        type:
+          complaint.complaintType === "INDIVIDUAL"
+            ? "ব্যক্তিগত অভিযোগ"
+            : "প্রাতিষ্ঠানিক অভিযোগ",
+        date: new Date(complaint.createdAt).toLocaleDateString("bn-BD", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         }),
-        status: complaint.status === "PENDING" ? "বিচারাধীন" : 
-                complaint.status === "RESOLVED" ? "নিষ্পত্তি হয়েছে" : "প্রক্রিয়াধীন",
-        originalStatus: complaint.status
+        status:
+          complaint.status === "PENDING"
+            ? "বিচারাধীন"
+            : complaint.status === "RESOLVED"
+            ? "নিষ্পত্তি হয়েছে"
+            : "প্রক্রিয়াধীন",
+        originalStatus: complaint.status,
       }));
-      
+
       setRecentComplaints(formattedComplaints);
     }
   }, [complaintData]);
 
-  // Get status color
   const getStatusColor = (status) => {
     switch (status) {
       case "প্রক্রিয়াধীন":
@@ -92,6 +113,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const renderChart = () => {
+    return (
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={monthlyStats}
+          margin={{
+            top: 20,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar
+            dataKey="individual"
+            name="ব্যক্তিগত অভিযোগ"
+            fill="#4F46E5"
+          />
+          <Bar
+            dataKey="institutional"
+            name="প্রাতিষ্ঠানিক অভিযোগ"
+            fill="#10B981"
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  };
+
+  // Rest of your JSX remains the same until the chart section
   return (
     <div className="py-2">
       {/* Welcome section */}
@@ -175,9 +229,7 @@ const AdminDashboard = () => {
               </div>
               <p className="mt-2 text-gray-600">নিষ্পত্তি হয়েছে</p>
               <p className="text-xs text-green-600 mt-1">
-                {stats.totalComplaints > 0 
-                  ? Math.round((stats.resolvedComplaints / stats.totalComplaints) * 100)
-                  : 0}% সম্পূর্ণ
+                {stats.resolvedPercentage.toFixed(1)}% সম্পূর্ণ
               </p>
             </>
           )}
@@ -270,18 +322,11 @@ const AdminDashboard = () => {
           {isLoading ? (
             <div className="animate-pulse h-64 bg-gray-200 rounded"></div>
           ) : (
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-center text-gray-500">
-                <p>চার্ট ভিজুয়ালাইজেশন এখানে প্রদর্শিত হবে</p>
-                <p className="text-sm">
-                  (চার্ট লাইব্রেরি অন্তর্ভুক্ত করা প্রয়োজন)
-                </p>
-              </div>
-            </div>
+            <div className="h-[400px]">{renderChart()}</div>
           )}
         </motion.div>
 
-        {/* Recent Complaints */}
+        {/* Recent Complaints section remains the same */}
         <motion.div
           className="bg-white rounded-xl shadow-sm overflow-hidden"
           variants={slideRight}
