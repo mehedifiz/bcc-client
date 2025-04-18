@@ -16,6 +16,9 @@ import ErrorElement from "../pages/ErrorElement/ErrorElement";
 import InstitutionalComplaintView from "../pages/Complaint/InstitutionalComplaintView";
 import Allcomplaints from "../pages/Complaint/Admin/Allcomplaints";
 import PaymentFailed from "../pages/ErrorElement/PaymentFailed";
+import AllUsers from "../pages/Dashboard/Admin/AllUsers";
+import UserDetails from "../pages/Dashboard/Admin/AdminDashboard/UserDetails";
+import ComplaintProcess from "../pages/ComplaintProcess/ComplaintProcess";
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: "payment/failed",
         element: <PaymentFailed />
+      },
+      {
+        path: "/complaint-process",
+        element: <ComplaintProcess />,
       },
     ],
   },
@@ -86,6 +93,14 @@ export const router = createBrowserRouter([
       {
         path: "/dashboard/admin/complaints",
         element: <Allcomplaints />
+      },
+      {
+        path: "/dashboard/admin/users",
+        element: <AllUsers />
+      },
+      {
+        path: "/dashboard/user/:id",
+        element: < UserDetails />
       },
     
     ],
