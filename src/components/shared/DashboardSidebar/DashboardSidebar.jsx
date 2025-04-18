@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
+import { BiUser } from "react-icons/bi";
 import { 
   FaBell, 
   FaChartBar, 
@@ -37,7 +38,9 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
     { title: "অভিযোগ ব্যবস্থাপনা", icon: <FaClipboardList />, path: "/dashboard/admin/complaints" },
     { title: "ব্যবহারকারী ব্যবস্থাপনা", icon: <FaUsers />, path: "/dashboard/admin/users" },
     { title: "পরিসংখ্যান", icon: <FaChartBar />, path: "/dashboard/admin/statistics" },
-    { title: "সেটিংস", icon: <FaCog />, path: "/dashboard/admin/settings" },
+    { title: "প্রোফাইল", icon: <BiUser />, path: "/profile" },
+    { title: "অভিযোগ দায়ের পদ্ধতি", icon: <FaBell />, path: "/complaint-process" },
+
   ];
 
   const userMenuItems = [
@@ -59,8 +62,11 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
       ]
     },
     { title: "আমার অভিযোগ", icon: <FaClipboardList />, path: "/dashboard/user/my-complaints" },
-    { title: "বিজ্ঞপ্তি", icon: <FaBell />, path: "/dashboard/user/notifications" },
+    { title: "অভিযোগ দায়ের পদ্ধতি", icon: <FaBell />, path: "/complaint-process" },
+   
+    { title: "প্রোফাইল", icon: <BiUser />, path: "/profile" },
     { title: "সাহায্য", icon: <FaQuestionCircle />, path: "/dashboard/user/help" },
+
   ];
 
   const menuItems = userRole === "admin" ? adminMenuItems : userMenuItems;

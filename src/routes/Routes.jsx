@@ -18,6 +18,7 @@ import Allcomplaints from "../pages/Complaint/Admin/Allcomplaints";
 import PaymentFailed from "../pages/ErrorElement/PaymentFailed";
 import AllUsers from "../pages/Dashboard/Admin/AllUsers";
 import UserDetails from "../pages/Dashboard/Admin/AdminDashboard/UserDetails";
+import ComplaintProcess from "../pages/ComplaintProcess/ComplaintProcess";
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: "payment/failed",
         element: <PaymentFailed />
+      },
+      {
+        path: "/complaint-process",
+        element: <ComplaintProcess />,
       },
     ],
   },
