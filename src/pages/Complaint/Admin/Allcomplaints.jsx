@@ -10,8 +10,8 @@ import { ComplaintTable } from "../components/ComplaintTable";
 const AllComplaints = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
-    type: "",
-    status: "",
+    complaintType: "",
+     
     search: "",
     startDate: "",
     endDate: ""
@@ -138,10 +138,14 @@ const ErrorState = () => (
 // Complaint statistics component
 const ComplaintStats = ({ stats }) => (
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <StatCard title="মোট অভিযোগ" value={stats?.total || 0} color="blue" />
-    <StatCard title="অপেক্ষমান" value={stats?.pending || 0} color="yellow" />
-    <StatCard title="প্রক্রিয়াধীন" value={stats?.inProgress || 0} color="purple" />
-    <StatCard title="নিষ্পত্তিকৃত" value={stats?.resolved || 0} color="green" />
+    <StatCard
+      title="মোট অভিযোগ"
+      value={(stats?.institutional || 0) + (stats?.individual || 0)}
+      color="blue"
+    />
+    <StatCard title="প্রাতিষ্ঠানিক" value={stats?.institutional || 0} color="yellow" />
+    <StatCard title="ব্যক্তিগত" value={stats?.individual || 0} color="purple" />
+    {/* <StatCard title="নিষ্পত্তিকৃত" value={stats?.resolved || 0} color="green" /> */}
   </div>
 );
 
@@ -170,7 +174,7 @@ const ComplaintFilters = ({ filters, onFilterChange }) => (
 
       <select
         value={filters.type}
-        onChange={(e) => onFilterChange({ ...filters, type: e.target.value })}
+        onChange={(e) => onFilterChange({ ...filters, complaintType: e.target.value })}
         className="p-2 border rounded-lg"
       >
         <option value="">সকল ধরন</option>
@@ -178,7 +182,7 @@ const ComplaintFilters = ({ filters, onFilterChange }) => (
         <option value="INSTITUTIONAL">প্রাতিষ্ঠানিক</option>
       </select>
 
-      <select
+      {/* <select
         value={filters.status}
         onChange={(e) => onFilterChange({ ...filters, status: e.target.value })}
         className="p-2 border rounded-lg"
@@ -189,7 +193,7 @@ const ComplaintFilters = ({ filters, onFilterChange }) => (
         <option value="IN_PROGRESS">প্রক্রিয়াধীন</option>
         <option value="RESOLVED">নিষ্পত্তিকৃত</option>
         <option value="REJECTED">প্রত্যাখ্যাত</option>
-      </select>
+      </select> */}
     </div>
   </div>
 );
