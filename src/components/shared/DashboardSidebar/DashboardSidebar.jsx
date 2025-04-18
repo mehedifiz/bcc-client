@@ -61,7 +61,6 @@ const DashboardSidebar = ({ userRole, closeSidebar, isMobile }) => {
     { title: "আমার অভিযোগ", icon: <FaClipboardList />, path: "/dashboard/user/my-complaints" },
     { title: "বিজ্ঞপ্তি", icon: <FaBell />, path: "/dashboard/user/notifications" },
     { title: "সাহায্য", icon: <FaQuestionCircle />, path: "/dashboard/user/help" },
-    { title: "প্রোফাইল সেটিংস", icon: <FaUserCog />, path: "/dashboard/user/settings" },
   ];
 
   const menuItems = userRole === "admin" ? adminMenuItems : userMenuItems;

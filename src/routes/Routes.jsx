@@ -16,6 +16,8 @@ import ErrorElement from "../pages/ErrorElement/ErrorElement";
 import InstitutionalComplaintView from "../pages/Complaint/InstitutionalComplaintView";
 import Allcomplaints from "../pages/Complaint/Admin/Allcomplaints";
 import PaymentFailed from "../pages/ErrorElement/PaymentFailed";
+import AllUsers from "../pages/Dashboard/Admin/AllUsers";
+import UserDetails from "../pages/Dashboard/Admin/AdminDashboard/UserDetails";
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +88,14 @@ export const router = createBrowserRouter([
       {
         path: "/dashboard/admin/complaints",
         element: <Allcomplaints />
+      },
+      {
+        path: "/dashboard/admin/users",
+        element: <AllUsers />
+      },
+      {
+        path: "/dashboard/user/:id",
+        element: < UserDetails />
       },
     
     ],
