@@ -57,7 +57,7 @@ const AdminDashboard = () => {
           totalComplaints: overview.totalComplaints || 0,
           resolvedComplaints: overview.resolvedComplaints || 0,
           pendingComplaints: statusDist.PENDING || 0,
-          totalUsers: overview.totalComplaints || 0,
+          totalUsers: overview.totalUsers || 0,
           resolvedPercentage:
             (overview.resolvedComplaints / overview.totalComplaints) * 100 || 0,
         });
